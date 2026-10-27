@@ -26,10 +26,23 @@ jobs:
       - name: Creer le projet Android
         run: |
           set -e
+          if [ ! -f index.html ]; then
+            for z in *.zip; do
+              [ -f "$z" ] && unzip -o "$z" -d _depot
+            done
+          fi
+          IDX=$(find . -name index.html -not -path "./node_modules/*" | head -1)
+          if [ -z "$IDX" ]; then
+            echo "index.html introuvable dans le depot"
+            exit 1
+          fi
+          SRCDIR=$(dirname "$IDX")
+          echo "Fichiers trouves dans $SRCDIR"
+          [ "$SRCDIR" = "." ] || cp "$SRCDIR"/icon*.png . 2>/dev/null || true
           mkdir www
-          cp index.html www/
-          cp manifest.webmanifest service-worker.js www/ 2>/dev/null || true
-          cp icon-*.png www/ 2>/dev/null || true
+          cp "$SRCDIR"/index.html www/
+          cp "$SRCDIR"/manifest.webmanifest "$SRCDIR"/service-worker.js www/ 2>/dev/null || true
+          cp "$SRCDIR"/icon-*.png www/ 2>/dev/null || true
           npm init -y
           npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
           npx cap init "Wells Pad" com.wells.pad --web-dir www
@@ -69,4 +82,3 @@ jobs:
           tag_name: apk-${{ github.run_number }}
           name: Wells Pad APK ${{ github.run_number }}
           files: Wells-Pad.apk
-          
